@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "drone-swarms"
+version = "0.1.0"
+description = ""
+authors = ["jeanjerome <jeanjerome.levy@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = "^2.2.3"
+matplotlib = "^3.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
