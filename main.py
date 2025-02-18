@@ -18,6 +18,9 @@ class DroneSwarmApp:
         self.root = root
         self.root.title("Drone Swarm Simulation")
 
+        self.target_point = np.array([0, 0, 0])  # Initial target point
+        self.is_x_at_origin = True  # State to track if the target is at the origin
+
         # Simulation parameters
         self.num_drones = 100  # Number of drones in the swarm
         self.iterations = 100  # Number of iterations (not currently used)
@@ -35,7 +38,7 @@ class DroneSwarmApp:
             CollisionAvoidanceAlgorithm(self.collision_threshold),
             FormationControlAlgorithm(self.formation_type.get())
         ]
-        
+
         # Initialize the swarm with 3D random positions
         self.drones = [Drone(np.random.rand(3) * 10, i) for i in range(self.num_drones)]
 
@@ -44,7 +47,7 @@ class DroneSwarmApp:
 
         # Set up the UI
         self.setup_ui()
-        
+
         # Simulation state
         self.running = True
 
@@ -65,21 +68,27 @@ class DroneSwarmApp:
 
         # Separator
         ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-        
+
         # Zoom level control
         ttk.Label(control_frame, text="Zoom Level:").pack(anchor=tk.W)
         zoom_scale = ttk.Scale(control_frame, from_=5.0, to=20.0, orient=tk.HORIZONTAL, variable=self.zoom_level, command=self.update_zoom)
         zoom_scale.pack(anchor=tk.W)
-        
+
         # Separator
         ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-        
+
         # Color mode control
         ttk.Label(control_frame, text="Color Mode:").pack(anchor=tk.W)
         self.color_mode = tk.StringVar(value="fixed")
         ttk.Radiobutton(control_frame, text="Fixed Colors", variable=self.color_mode, value="fixed", command=self.update_color_mode).pack(anchor=tk.W)
         ttk.Radiobutton(control_frame, text="Distance Colors", variable=self.color_mode, value="distance", command=self.update_color_mode).pack(anchor=tk.W)
-        
+
+        # Separator
+        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+
+        # Button to change the target position
+        ttk.Button(control_frame, text="Change X Position", command=self.change_x_position).pack(pady=10)
+
         # Separator
         ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
@@ -106,8 +115,11 @@ class DroneSwarmApp:
         """
         self.visualizer.update_zoom(self.zoom_level.get())
         self.canvas.draw()
-        
+
     def update_color_mode(self):
+        """
+        Update the color mode of the drones in the visualization.
+        """
         self.visualizer.color_mode = self.color_mode.get()
         self.visualizer.update_colors()
         self.canvas.draw()
@@ -124,6 +136,29 @@ class DroneSwarmApp:
             self.start_button.config(text="Stop")
             threading.Thread(target=self.run_simulation).start()
 
+    def change_x_position(self):
+        """
+        Toggle the target position between [20, 0, 0] and [0, 0, 0].
+        """
+        if self.is_x_at_origin:
+            self.target_point = np.array([20, 0, 0])
+        else:
+            self.target_point = np.array([0, 0, 0])
+
+        self.is_x_at_origin = not self.is_x_at_origin
+        self.update_target_positions()
+
+    def update_target_positions(self):
+        """
+        Update the target positions of the drones based on the current formation.
+        """
+        formation = self.behavior_algorithms[-1].get_formation(self.drones)
+        for drone, target in zip(self.drones, formation):
+            drone.target_position = self.target_point + target
+
+        # Update the target point in the formation control algorithm
+        self.behavior_algorithms[-1].set_target_point(self.target_point)
+
     def run_simulation(self):
         """
         Run the simulation loop, updating drone positions and refreshing the visualization.
@@ -133,6 +168,9 @@ class DroneSwarmApp:
             for drone in self.drones:
                 neighbor_positions = [other_drone.communicate() for other_drone in self.drones if other_drone != drone]
                 drone.update_position(neighbor_positions, self.behavior_algorithms)
+
+            # Update the view to follow the drones
+            self.visualizer.update_view(self.drones)
 
             # Refresh visualization
             self.visualizer.update()
