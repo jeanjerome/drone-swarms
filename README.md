@@ -22,6 +22,18 @@ A Python-based **drone swarm simulator** that models the behavior of multiple au
 
 - **Python 3.12+** is required.
 - **Poetry** for dependency management.
+- **Conda** for managing virtual environments (or **other** tools).
+
+### Create and Activate your Virtual Environment
+
+If you use Conda like I do:
+
+#### Create a Conda environment with Python 3.12:
+
+```bash
+conda create -n drone-swarms python=3.12 -y
+conda activate drone-swarms
+```
 
 ### Install Poetry (if not installed)
 

@@ -15,6 +15,7 @@ class Drone:
         """
         self.position = np.array(position)
         self.index = index
+        self.target_position = np.array(position)  # Initialize with the current position
 
     def update_position(self, neighbor_positions, behavior_algorithms):
         """
@@ -32,6 +33,11 @@ class Drone:
         # Calculate the average of all proposed new positions
         new_position = np.mean(new_positions, axis=0)
         self.position = new_position
+        
+        # Update target position based on the last applied algorithm
+        if behavior_algorithms:
+            self.target_position = behavior_algorithms[-1].apply(self, neighbor_positions, self.position.copy())
+
 
     def communicate(self):
         """

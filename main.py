@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
-import time
 import numpy as np
 
 from behaviors.consensus_algorithm import ConsensusAlgorithm
@@ -30,18 +29,18 @@ class DroneSwarmApp:
         self.formation_type = tk.StringVar(value="line")  # Formation type selection
         self.zoom_level = tk.DoubleVar(value=10.0)  # Zoom level for visualization
 
-        # Initialize the swarm with 3D random positions
-        self.drones = [Drone(np.random.rand(3) * 10, i) for i in range(self.num_drones)]
-        
         # Define behavior algorithms
         self.behavior_algorithms = [
             ConsensusAlgorithm(self.epsilon),
             CollisionAvoidanceAlgorithm(self.collision_threshold),
             FormationControlAlgorithm(self.formation_type.get())
         ]
+        
+        # Initialize the swarm with 3D random positions
+        self.drones = [Drone(np.random.rand(3) * 10, i) for i in range(self.num_drones)]
 
         # Initialize the visualizer
-        self.visualizer = DroneSwarmVisualizer(self.drones)
+        self.visualizer = DroneSwarmVisualizer(self.drones, self.formation_type.get())
 
         # Set up the UI
         self.setup_ui()
@@ -64,10 +63,25 @@ class DroneSwarmApp:
         ttk.Radiobutton(control_frame, text="Square", variable=self.formation_type, value="square", command=self.update_formation).pack(anchor=tk.W)
         ttk.Radiobutton(control_frame, text="Random", variable=self.formation_type, value="random", command=self.update_formation).pack(anchor=tk.W)
 
+        # Separator
+        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        
         # Zoom level control
         ttk.Label(control_frame, text="Zoom Level:").pack(anchor=tk.W)
         zoom_scale = ttk.Scale(control_frame, from_=5.0, to=20.0, orient=tk.HORIZONTAL, variable=self.zoom_level, command=self.update_zoom)
         zoom_scale.pack(anchor=tk.W)
+        
+        # Separator
+        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
+        
+        # Color mode control
+        ttk.Label(control_frame, text="Color Mode:").pack(anchor=tk.W)
+        self.color_mode = tk.StringVar(value="fixed")
+        ttk.Radiobutton(control_frame, text="Fixed Colors", variable=self.color_mode, value="fixed", command=self.update_color_mode).pack(anchor=tk.W)
+        ttk.Radiobutton(control_frame, text="Distance Colors", variable=self.color_mode, value="distance", command=self.update_color_mode).pack(anchor=tk.W)
+        
+        # Separator
+        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
         # Start/Stop button
         self.start_button = ttk.Button(control_frame, text="Start", command=self.toggle_simulation)
@@ -83,12 +97,19 @@ class DroneSwarmApp:
         Update the formation control algorithm when the user selects a different formation.
         """
         self.behavior_algorithms[-1] = FormationControlAlgorithm(self.formation_type.get())
+        self.visualizer.formation_type = self.formation_type.get()
+        self.canvas.draw()
 
     def update_zoom(self, event):
         """
         Update the visualization zoom level when the user adjusts the zoom slider.
         """
         self.visualizer.update_zoom(self.zoom_level.get())
+        self.canvas.draw()
+        
+    def update_color_mode(self):
+        self.visualizer.color_mode = self.color_mode.get()
+        self.visualizer.update_colors()
         self.canvas.draw()
 
     def toggle_simulation(self):
@@ -116,9 +137,6 @@ class DroneSwarmApp:
             # Refresh visualization
             self.visualizer.update()
             self.canvas.draw()
-            
-            # Wait for the next update interval
-            time.sleep(self.interval / 1000)
 
 # Main entry point for the application
 def main():
