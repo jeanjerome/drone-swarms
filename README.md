@@ -9,7 +9,7 @@ A Python-based **drone swarm simulator** that models the behavior of multiple au
 - **Swarm Behavior Algorithms:**
   - **Consensus Algorithm:** Ensures cohesion by moving drones toward the average position of their neighbors.
   - **Collision Avoidance Algorithm:** Prevents drones from colliding by adjusting their trajectories dynamically.
-  - **Formation Control Algorithm:** Organizes drones into structured formations (line, circle, or V-shape).
+  - **Formation Control Algorithm:** Organizes drones into structured formations (line, circle, square or random).
 - **Interactive Visualization:**
   - Real-time 3D visualization of drone movements using **Matplotlib**.
   - Adjustable **zoom level** for better observation.
@@ -48,7 +48,7 @@ poetry run python main.py
 ```
 
 ### UI Controls
-- **Formation Selection:** Choose between line, circle, and V-shape formations.
+- **Formation Selection:** Choose between line, circle, square and random formations.
 - **Zoom Level:** Adjust zoom for better visualization.
 - **Start/Stop Simulation:** Toggle the simulation on and off.
 
@@ -75,7 +75,6 @@ poetry run python main.py
 
 ## 📖 Future Improvements
 
-- [ ] Implement **Square formation** logic.
 - 🔄 Add more **swarm behavior algorithms**:
   - [ ] **Obstacle Avoidance (Évitement d'Obstacles)**
    - **Description** : The drones detect and avoid static or dynamic obstacles in the environment.

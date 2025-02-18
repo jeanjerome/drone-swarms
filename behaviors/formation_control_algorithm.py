@@ -11,7 +11,7 @@ class FormationControlAlgorithm:
         Initializes the formation control algorithm.
 
         Parameters:
-        - formation_type (str): The type of formation ('line', 'circle', etc.).
+        - formation_type (str): The type of formation ('line', 'circle', 'square', 'random').
         """
         self.formation_type = formation_type
 
@@ -31,6 +31,10 @@ class FormationControlAlgorithm:
             target_position = self._line_formation(drone, neighbor_positions)
         elif self.formation_type == "circle":
             target_position = self._circle_formation(drone, neighbor_positions)
+        elif self.formation_type == "square":
+            target_position = self._square_formation(drone, neighbor_positions)
+        elif self.formation_type == "random":
+            target_position = self._random_formation()
         else:
             # If the formation type is unknown, keep the current position
             return current_position
@@ -53,8 +57,9 @@ class FormationControlAlgorithm:
         Returns:
         - target_position (numpy array): The computed position for the line formation.
         """
+        line_length = 10  # Increased line length
         # Dynamically determine the target positions along a straight line
-        target_positions = np.linspace(0, 10, len(neighbor_positions) + 1)
+        target_positions = np.linspace(0, line_length, len(neighbor_positions) + 1)
         
         # Set the target position based on the drone's index, centering the line at (5,5)
         target_position = np.array([target_positions[drone.index], 5.0, 5.0])
@@ -74,7 +79,7 @@ class FormationControlAlgorithm:
         """
         # Compute the angle for each drone in the circle
         angle = 2 * np.pi * drone.index / len(neighbor_positions)
-        radius = 5  # Radius of the circle
+        radius = 10  # Radius of the circle
 
         # Compute the target position for circular formation, centering at (5,5)
         target_position = np.array([
@@ -83,4 +88,43 @@ class FormationControlAlgorithm:
             5.0
         ])
 
+        return target_position
+
+    def _square_formation(self, drone, neighbor_positions):
+        """
+        Computes the target position for a square formation.
+        
+        Parameters:
+        - drone (Drone): The current drone object.
+        - neighbor_positions (list of numpy arrays): Positions of neighboring drones.
+        
+        Returns:
+        - target_position (numpy array): The computed position for the square formation.
+        """
+        num_drones = len(neighbor_positions) + 1
+        side_length = int(np.ceil(np.sqrt(num_drones)))  # Define the grid size
+        
+        row = drone.index // side_length
+        col = drone.index % side_length
+        
+        spacing = 2  # Adjust spacing between drones
+        center_offset = (side_length - 1) * spacing / 2
+        
+        target_position = np.array([
+            col * spacing + 5.0 - center_offset, 
+            row * spacing + 5.0 - center_offset,
+            5.0
+        ])
+        
+        return target_position
+    
+    def _random_formation(self):
+        """
+        Computes a random target 3D position for the drone.
+        
+        Returns:
+        - target_position (numpy array): A random position within a defined space.
+        """
+        target_position = np.random.rand(3) * 10
+        
         return target_position

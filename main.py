@@ -21,7 +21,6 @@ class DroneSwarmApp:
 
         # Simulation parameters
         self.num_drones = 100  # Number of drones in the swarm
-        self.dimensions = 3  # 3D space
         self.iterations = 100  # Number of iterations (not currently used)
         self.epsilon = 0.1  # Parameter for the consensus algorithm
         self.collision_threshold = 1.0  # Minimum distance to avoid collisions
@@ -31,8 +30,8 @@ class DroneSwarmApp:
         self.formation_type = tk.StringVar(value="line")  # Formation type selection
         self.zoom_level = tk.DoubleVar(value=10.0)  # Zoom level for visualization
 
-        # Initialize the swarm with random positions
-        self.drones = [Drone(np.random.rand(self.dimensions) * 10, i) for i in range(self.num_drones)]
+        # Initialize the swarm with 3D random positions
+        self.drones = [Drone(np.random.rand(3) * 10, i) for i in range(self.num_drones)]
         
         # Define behavior algorithms
         self.behavior_algorithms = [
@@ -62,6 +61,8 @@ class DroneSwarmApp:
         ttk.Label(control_frame, text="Formation:").pack(anchor=tk.W)
         ttk.Radiobutton(control_frame, text="Line", variable=self.formation_type, value="line", command=self.update_formation).pack(anchor=tk.W)
         ttk.Radiobutton(control_frame, text="Circle", variable=self.formation_type, value="circle", command=self.update_formation).pack(anchor=tk.W)
+        ttk.Radiobutton(control_frame, text="Square", variable=self.formation_type, value="square", command=self.update_formation).pack(anchor=tk.W)
+        ttk.Radiobutton(control_frame, text="Random", variable=self.formation_type, value="random", command=self.update_formation).pack(anchor=tk.W)
 
         # Zoom level control
         ttk.Label(control_frame, text="Zoom Level:").pack(anchor=tk.W)
