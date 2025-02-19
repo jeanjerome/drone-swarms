@@ -73,10 +73,10 @@ class DroneSwarmVisualizer:
         """
         Updates the colors of the drones based on the selected color mode.
         """
-        if self.color_mode == 'fixed':
+        if self.color_mode == 'by_index':
             colormap = cm.hsv
             self.colors = colormap(np.linspace(0, 1, len(self.drones)))
-        elif self.color_mode == 'distance':
+        elif self.color_mode == 'by_distance':
             self.colors = self.calculate_colors_by_distance()
 
         self.scat.set_color(self.colors)

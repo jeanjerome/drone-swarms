@@ -20,7 +20,7 @@ A Python-based **drone swarm simulator** that models the behavior of multiple au
 
 ### Prerequisites
 
-- **Python 3.12+** is required.
+- **Python 3.12+** is required (and should include Tkinter).
 - **Poetry** for dependency management.
 - **Conda** for managing virtual environments (or **other** tools).
 
@@ -61,8 +61,9 @@ poetry run python main.py
 
 ### UI Controls
 - **Formation Selection:** Choose between line, circle, square and random formations.
-- **Zoom Level:** Adjust zoom for better visualization.
+- **Zoom Level:** Adjust zoom for better visualization (but no longer needed due to automatic zooming).
 - **Start/Stop Simulation:** Toggle the simulation on and off.
+- **Color Mode:** Choose drones color based on their index or distance to target.
 
 ## 📂 Project Structure
 

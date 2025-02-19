@@ -49,7 +49,7 @@ class DroneSwarmApp:
         self.setup_ui()
 
         # Simulation state
-        self.running = True
+        self.running = False
 
     def setup_ui(self):
         """
@@ -79,9 +79,9 @@ class DroneSwarmApp:
 
         # Color mode control
         ttk.Label(control_frame, text="Color Mode:").pack(anchor=tk.W)
-        self.color_mode = tk.StringVar(value="fixed")
-        ttk.Radiobutton(control_frame, text="Fixed Colors", variable=self.color_mode, value="fixed", command=self.update_color_mode).pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="Distance Colors", variable=self.color_mode, value="distance", command=self.update_color_mode).pack(anchor=tk.W)
+        self.color_mode = tk.StringVar(value="by_index")
+        ttk.Radiobutton(control_frame, text="By Index", variable=self.color_mode, value="by_index", command=self.update_color_mode).pack(anchor=tk.W)
+        ttk.Radiobutton(control_frame, text="By Distance", variable=self.color_mode, value="by_distance", command=self.update_color_mode).pack(anchor=tk.W)
 
         # Separator
         ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
@@ -93,7 +93,7 @@ class DroneSwarmApp:
         ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
 
         # Start/Stop button
-        self.start_button = ttk.Button(control_frame, text="Start", command=self.toggle_simulation)
+        self.start_button = ttk.Button(control_frame, text="Animate", command=self.toggle_simulation)
         self.start_button.pack(pady=10)
 
         # Canvas to display the swarm visualization
@@ -130,7 +130,7 @@ class DroneSwarmApp:
         """
         if self.running:
             self.running = False
-            self.start_button.config(text="Start")
+            self.start_button.config(text="Animate")
         else:
             self.running = True
             self.start_button.config(text="Stop")
