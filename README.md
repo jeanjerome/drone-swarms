@@ -2,7 +2,7 @@
 
 A Python-based **drone swarm simulator** that models the behavior of multiple autonomous drones using different algorithms for **consensus**, **collision avoidance**, and **formation control**. The simulation is visualized in **3D** using Matplotlib and controlled through a Tkinter-based GUI.
 
-![Drone Swarms](drone-swarms.png)
+[![Watch the Drone Swarm Simulation](drone-swarms.png)](https://www.youtube.com/watch?v=5PN6R7qeXt8)
 
 ## 🚀 Features
 
