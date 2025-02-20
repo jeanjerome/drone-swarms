@@ -1,5 +1,7 @@
 # Drone Swarm Simulation
 
+> Work in Progress (WIP): Migration to asyncio on tkinter with event-driven processing.
+
 A Python-based **drone swarm simulator** that models the behavior of multiple autonomous drones using different algorithms for **consensus**, **collision avoidance**, and **formation control**. The simulation is visualized in **3D** using Matplotlib and controlled through a Tkinter-based GUI.
 
 [![Watch the Drone Swarm Simulation](drone-swarms.png)](https://www.youtube.com/watch?v=5PN6R7qeXt8)
@@ -68,17 +70,58 @@ poetry run python main.py
 ## 📂 Project Structure
 
 ```
-📦 drone-swarms
-│── 📜 main.py                  # Entry point for the simulation (Tkinter-based UI)
-│── 📜 drone.py                 # Drone class defining behavior and communication
-│── 📜 visualizer.py            # Matplotlib-based 3D visualization
-│── 📂 behaviors                # Folder containing behavior algorithms
-│   │── 📜 consensus_algorithm.py       # Consensus-based movement logic
-│   │── 📜 collision_avoidance_algorithm.py  # Avoidance of drone collisions
-│   │── 📜 formation_control_algorithm.py   # Formation control logic
-│── 📜 README.md                # Project documentation
-│── 📜 pyproject.toml           # Poetry configuration file
-│── 📜 poetry.lock              # Poetry lockfile
+drone-swarm-simulation/
+│
+├── main.py                   # Main entry point to launch the simulation. Defines the DroneSwarmApp class.
+│
+├── ai/                       # Directory containing behavior algorithms
+│   ├── behavior_algorithm.py # Base class for behavior algorithms
+│   ├── collision_avoidance.py # Collision avoidance algorithm
+│   ├── consensus.py          # Consensus algorithm
+│   ├── formation_control.py  # Formation control algorithm
+│   └── behavior_manager.py   # Behavior manager
+│
+├── core/                     # Directory containing drone-related classes and modules
+│   ├── drone.py              # Main class representing a drone
+│   ├── motor.py              # Class representing the drone's motors
+│   ├── battery.py            # Class managing the drone's battery level
+│   └── communication.py      # Class managing communication between drones
+│
+├── simulation/              # Directory containing simulation classes
+│   ├── swarm_simulation.py  # Main class for the drone swarm simulation
+│   └── event_manager.py      # Class managing events and communication between components
+│
+├── visualization/           # Directory containing visualization classes
+│   ├── color_manager.py     # Class managing drone colors
+│   └── swarm_visualizer.py  # Main class for visualizing the drone swarm
+│
+├── config/                   # Directory containing configuration files
+│   └── sim_config.py         # Global configuration for the simulation
+│
+├── tests/                    # Directory containing tests
+│   ├── ai/                   # Tests for AI algorithms
+│   │   ├── test_behavior_manager.py # Tests for the BehaviorManager class
+│   │   ├── test_collision_avoidance.py # Tests for the CollisionAvoidance algorithm
+│   │   ├── test_consensus.py # Tests for the Consensus algorithm
+│   │   └── test_formation_control.py # Tests for the FormationControl algorithm
+│   │
+│   ├── core/                 # Tests for core components
+│   │   ├── test_battery.py    # Tests for the Battery class
+│   │   ├── test_communication.py # Tests for the Communication class
+│   │   ├── test_drone.py     # Tests for the Drone class
+│   │   └── test_motor.py     # Tests for the Motor class
+│   │
+│   ├── simulation/           # Tests for simulation components
+│   │   ├── test_event_manager.py # Tests for the EventManager class
+│   │   └── test_swarm_simulation.py # Tests for the SwarmSimulation class
+│   │
+│   └── visualization/        # Tests for visualization components
+│       ├── test_color_manager.py # Tests for the ColorManager class
+│       └── test_swarm_visualizer.py # Tests for the SwarmVisualizer class
+│
+├── README.md                 # Main README file
+│
+└── pyproject.toml            # Project dependencies manage by Poetry
 ```
 
 ## 🛠️ Customization

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "drone-swarms"
-version = "0.2.0"
+version = "0.3.0"
 description = "A Python-based drone swarm simulator with real-time 3D visualization."
 authors = ["jeanjerome <jeanjerome.levy@gmail.com>"]
 license = "MIT"
@@ -11,6 +11,11 @@ package-mode = false
 python = "^3.12"
 numpy = "^2.2.3"
 matplotlib = "^3.10.0"
+asyncio = "^3.4.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+code2flow = "^2.5.1"
 
 [build-system]
 requires = ["poetry-core"]

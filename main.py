@@ -1,186 +1,105 @@
-import tkinter as tk
-from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import asyncio
+import logging
+import sys
 import threading
 import numpy as np
+import tkinter as tk
 
-from behaviors.consensus_algorithm import ConsensusAlgorithm
-from behaviors.collision_avoidance_algorithm import CollisionAvoidanceAlgorithm
-from behaviors.formation_control_algorithm import FormationControlAlgorithm
-from visualizer import DroneSwarmVisualizer
-from drone import Drone
+from config.logging_config import configure_logging
+from core.drone import Drone
+from ai.behavior_manager import BehaviorManager
+from ai.collision_avoidance import CollisionAvoidance
+from ai.consensus import Consensus
+from ai.formation_control import FormationControl
+from simulation.event_manager import EventManager
+from simulation.swarm_simulation import SwarmSimulation
+from visualization.swarm_visualizer import SwarmVisualizer
+from visualization.ui_controller import UIController
 
-class DroneSwarmApp:
-    def __init__(self, root):
+# Configure logging
+configure_logging(logging.DEBUG)
+
+class DroneSwarmApp(tk.Frame):
+    """
+    Main class for the drone simulation application.
+    """
+
+    def __init__(self, loop: asyncio.AbstractEventLoop, parent: tk.Tk, num_drones: int = 100, formation: str = "line") -> None:
         """
-        Initialize the Drone Swarm Simulation application.
+        Initialize all components necessary for the simulation.
+
+        Args:
+            loop (asyncio.AbstractEventLoop): Main event loop.
+            num_drones (int): Number of drones in the simulation.
+            formation (str): Initial formation of the drones ("circle", "line", "square", "random").
         """
-        self.root = root
-        self.root.title("Drone Swarm Simulation")
+        super().__init__(parent)
 
-        self.target_point = np.array([0, 0, 0])  # Initial target point
-        self.is_x_at_origin = True  # State to track if the target is at the origin
+        self.loop = loop
+        self.root = parent
+        self.logger = logging.getLogger(__name__)
+        self.num_drones = num_drones
+        self.formation = formation
+        self.running = True
 
-        # Simulation parameters
-        self.num_drones = 100  # Number of drones in the swarm
-        self.iterations = 100  # Number of iterations (not currently used)
-        self.epsilon = 0.1  # Parameter for the consensus algorithm
-        self.collision_threshold = 1.0  # Minimum distance to avoid collisions
-        self.interval = 200  # Time interval between simulation updates (ms)
+        self.logger.info(f"Initializing DroneSwarmApp with {num_drones} drones in '{formation}' formation.")
 
-        # UI control variables
-        self.formation_type = tk.StringVar(value="line")  # Formation type selection
-        self.zoom_level = tk.DoubleVar(value=10.0)  # Zoom level for visualization
+        # Initialize EventManager
+        self.event_manager = EventManager(self.root)
 
-        # Define behavior algorithms
-        self.behavior_algorithms = [
-            ConsensusAlgorithm(self.epsilon),
-            CollisionAvoidanceAlgorithm(self.collision_threshold),
-            FormationControlAlgorithm(self.formation_type.get())
+        # Create drones and emit initialization events
+        self.drones = [Drone(index=i, position=np.random.rand(3) * 10) for i in range(num_drones)]
+        self.logger.info(f"All {num_drones} drones have been initialized.")
+
+        # Instantiate behavior managers
+        self.behaviors = [
+            CollisionAvoidance(collision_threshold=2.0),
+            Consensus(epsilon=0.1),
+            FormationControl(formation_type=formation)
         ]
+        self.behavior_manager = BehaviorManager(behaviors=self.behaviors)
 
-        # Initialize the swarm with 3D random positions
-        self.drones = [Drone(np.random.rand(3) * 10, i) for i in range(self.num_drones)]
+        # Initialize simulation with EventManager
+        self.simulation = SwarmSimulation(drones=self.drones, behavior_manager=self.behavior_manager, event_manager=self.event_manager)
 
-        # Initialize the visualizer
-        self.visualizer = DroneSwarmVisualizer(self.drones, self.formation_type.get())
+        # Initialize visualizer
+        self.visualizer = SwarmVisualizer(drones=self.drones, event_manager=self.event_manager, formation_control=self.behaviors[-1])
 
-        # Set up the UI
-        self.setup_ui()
+        # Initialize user interface
+        self.ui_controller = UIController(root=self.root, simulation=self.simulation, visualizer=self.visualizer, loop=self.loop)
 
-        # Simulation state
-        self.running = False
+        self.logger.info("DroneSwarmApp initialization complete.")
 
-    def setup_ui(self):
+    def run(self):
         """
-        Set up the graphical user interface.
+        Start the application by displaying the user interface with the asyncio loop.
         """
-        # Create a frame for controls
-        control_frame = ttk.Frame(self.root)
-        control_frame.pack(side=tk.LEFT, fill=tk.Y)
+        self.logger.info("🚀 Launching the application...")
+        self.event_manager.notify("SIMULATION_STARTED", {"num_drones": self.num_drones, "formation": self.formation})
+        self._tkinter_loop()
 
-        # Formation selection radio buttons
-        ttk.Label(control_frame, text="Formation:").pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="Line", variable=self.formation_type, value="line", command=self.update_formation).pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="Circle", variable=self.formation_type, value="circle", command=self.update_formation).pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="Square", variable=self.formation_type, value="square", command=self.update_formation).pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="Random", variable=self.formation_type, value="random", command=self.update_formation).pack(anchor=tk.W)
-
-        # Separator
-        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-
-        # Zoom level control
-        ttk.Label(control_frame, text="Zoom Level:").pack(anchor=tk.W)
-        zoom_scale = ttk.Scale(control_frame, from_=5.0, to=20.0, orient=tk.HORIZONTAL, variable=self.zoom_level, command=self.update_zoom)
-        zoom_scale.pack(anchor=tk.W)
-
-        # Separator
-        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-
-        # Color mode control
-        ttk.Label(control_frame, text="Color Mode:").pack(anchor=tk.W)
-        self.color_mode = tk.StringVar(value="by_index")
-        ttk.Radiobutton(control_frame, text="By Index", variable=self.color_mode, value="by_index", command=self.update_color_mode).pack(anchor=tk.W)
-        ttk.Radiobutton(control_frame, text="By Distance", variable=self.color_mode, value="by_distance", command=self.update_color_mode).pack(anchor=tk.W)
-
-        # Separator
-        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-
-        # Button to change the target position
-        ttk.Button(control_frame, text="Change X Position", command=self.change_x_position).pack(pady=10)
-
-        # Separator
-        ttk.Separator(control_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=5)
-
-        # Start/Stop button
-        self.start_button = ttk.Button(control_frame, text="Animate", command=self.toggle_simulation)
-        self.start_button.pack(pady=10)
-
-        # Canvas to display the swarm visualization
-        self.canvas = FigureCanvasTkAgg(self.visualizer.fig, master=self.root)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
-
-    def update_formation(self):
-        """
-        Update the formation control algorithm when the user selects a different formation.
-        """
-        self.behavior_algorithms[-1] = FormationControlAlgorithm(self.formation_type.get())
-        self.visualizer.formation_type = self.formation_type.get()
-        self.canvas.draw()
-
-    def update_zoom(self, event):
-        """
-        Update the visualization zoom level when the user adjusts the zoom slider.
-        """
-        self.visualizer.update_zoom(self.zoom_level.get())
-        self.canvas.draw()
-
-    def update_color_mode(self):
-        """
-        Update the color mode of the drones in the visualization.
-        """
-        self.visualizer.color_mode = self.color_mode.get()
-        self.visualizer.update_colors()
-        self.canvas.draw()
-
-    def toggle_simulation(self):
-        """
-        Start or stop the simulation when the button is clicked.
-        """
+    def _tkinter_loop(self):
+        """Event loop to update Tkinter without blocking asyncio."""
         if self.running:
-            self.running = False
-            self.start_button.config(text="Animate")
-        else:
-            self.running = True
-            self.start_button.config(text="Stop")
-            threading.Thread(target=self.run_simulation).start()
+            self.update()
+            self.root.after(100, self._tkinter_loop)  # 10 ms = 0.01 s
 
-    def change_x_position(self):
-        """
-        Toggle the target position between [20, 0, 0] and [0, 0, 0].
-        """
-        if self.is_x_at_origin:
-            self.target_point = np.array([20, 0, 0])
-        else:
-            self.target_point = np.array([0, 0, 0])
+def loop_worker(loop_: asyncio.AbstractEventLoop):
+    """
+    Thread for running the asyncio event loop
+    """
+    asyncio.set_event_loop(loop_)
+    loop_.run_forever()
 
-        self.is_x_at_origin = not self.is_x_at_origin
-        self.update_target_positions()
-
-    def update_target_positions(self):
-        """
-        Update the target positions of the drones based on the current formation.
-        """
-        formation = self.behavior_algorithms[-1].get_formation(self.drones)
-        for drone, target in zip(self.drones, formation):
-            drone.target_position = self.target_point + target
-
-        # Update the target point in the formation control algorithm
-        self.behavior_algorithms[-1].set_target_point(self.target_point)
-
-    def run_simulation(self):
-        """
-        Run the simulation loop, updating drone positions and refreshing the visualization.
-        """
-        while self.running:
-            # Update each drone's position based on behavior algorithms
-            for drone in self.drones:
-                neighbor_positions = [other_drone.communicate() for other_drone in self.drones if other_drone != drone]
-                drone.update_position(neighbor_positions, self.behavior_algorithms)
-
-            # Update the view to follow the drones
-            self.visualizer.update_view(self.drones)
-
-            # Refresh visualization
-            self.visualizer.update()
-            self.canvas.draw()
-
-# Main entry point for the application
 def main():
+    loop = asyncio.new_event_loop()
+    loop_thread = threading.Thread(target=loop_worker, args=(loop,), daemon=True)
+    loop_thread.start()
     root = tk.Tk()
-    app = DroneSwarmApp(root)
+    app = DroneSwarmApp(loop, root)
+    app.pack(fill="both", expand=True)
+
     root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
